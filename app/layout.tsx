@@ -11,9 +11,9 @@ export const metadata: Metadata = {
   alternates: { canonical: "/" },
   openGraph: { type: "website", locale: "en_ZA", url: siteUrl, siteName, title: "Apparel Plantra", description: siteDescription },
   icons: {
-    icon: [{ url: "/favicon.png?v=3", sizes: "512x512", type: "image/png" }],
-    shortcut: "/favicon.ico?v=3",
-    apple: [{ url: "/favicon.png?v=3", sizes: "512x512", type: "image/png" }]
+    icon: [{ url: "/favicon.png?v=4", sizes: "512x512", type: "image/png" }],
+    shortcut: "/favicon.ico?v=4",
+    apple: [{ url: "/favicon.png?v=4", sizes: "512x512", type: "image/png" }]
   },
 };
 
