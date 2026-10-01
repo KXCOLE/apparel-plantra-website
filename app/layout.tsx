@@ -5,10 +5,10 @@ import { siteDescription, siteName, siteUrl } from "@/data/site";
 
 export const metadata: Metadata = {
   metadataBase: new URL(siteUrl),
-  title: { default: "Apparel Plantra | South African Graphic Streetwear", template: `%s | ${siteName}` },
+  title: "Apparel Plantra",
   description: siteDescription,
   alternates: { canonical: "/" },
-  openGraph: { type: "website", locale: "en_ZA", url: siteUrl, siteName, title: "Apparel Plantra | South African Graphic Streetwear", description: siteDescription },
+  openGraph: { type: "website", locale: "en_ZA", url: siteUrl, siteName, title: "Apparel Plantra", description: siteDescription },
   icons: { icon: [{ url: "/favicon.png?v=1", type: "image/png" }] },
 };
 
