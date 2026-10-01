@@ -8,14 +8,15 @@
     "start": "node node_modules/next/dist/bin/next start"
   },
   "dependencies": {
+    "framer-motion": "^13.4.6",
     "next": "15.5.9",
     "react": "19.1.1",
     "react-dom": "19.1.1"
   },
   "devDependencies": {
-    "typescript": "^5",
     "@types/node": "^20",
     "@types/react": "^19",
-    "@types/react-dom": "^19"
+    "@types/react-dom": "^19",
+    "typescript": "^5"
   }
 }
