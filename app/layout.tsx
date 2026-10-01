@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   description: siteDescription,
   alternates: { canonical: "/" },
   openGraph: { type: "website", locale: "en_ZA", url: siteUrl, siteName, title: "Apparel Plantra | South African Graphic Streetwear", description: siteDescription },
-  icons: { icon: "/favicon.svg" },
+  icons: { icon: [{ url: "/favicon.png?v=1", type: "image/png" }] },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
