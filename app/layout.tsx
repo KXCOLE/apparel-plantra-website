@@ -10,7 +10,11 @@ export const metadata: Metadata = {
   description: siteDescription,
   alternates: { canonical: "/" },
   openGraph: { type: "website", locale: "en_ZA", url: siteUrl, siteName, title: "Apparel Plantra", description: siteDescription },
-  icons: { icon: [{ url: "/icon.png?v=2", type: "image/png" }] },
+  icons: {
+    icon: [{ url: "/favicon.png?v=3", sizes: "512x512", type: "image/png" }],
+    shortcut: "/favicon.ico?v=3",
+    apple: [{ url: "/favicon.png?v=3", sizes: "512x512", type: "image/png" }]
+  },
 };
 
 export default function RootLayout({ children }: Readonly<{ children: React.ReactNode }>) {
