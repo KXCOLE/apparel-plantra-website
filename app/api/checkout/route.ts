@@ -44,7 +44,8 @@ export async function POST(request: Request) {
   fields.signature = createSignature(fields, passphrase);
   const action = process.env.PAYFAST_SANDBOX === "true" ? "https://sandbox.payfast.co.za/eng/process" : "https://www.payfast.co.za/eng/process";
   return NextResponse.json({ action, fields });
-  } catch {
+  } catch (error) {
+    console.error("PayFast checkout setup error", error);
     return NextResponse.json({ error: "Checkout could not start. Confirm the PayFast settings and redeploy." }, { status: 500 });
   }
 }
