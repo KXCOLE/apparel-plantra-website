@@ -4,10 +4,11 @@ import Link from "next/link";
 import { useState } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { useCart } from "@/components/cart-provider";
-import { formatPrice } from "@/data/products";
+import { useCurrency } from "@/components/currency-provider";
 
 export default function CartPage() {
   const { items, removeItem } = useCart();
+  const { currency, formatPrice } = useCurrency();
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const [error, setError] = useState("");
   const total = items.reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -26,5 +27,5 @@ export default function CartPage() {
     }
   };
 
-  return <main><SiteHeader/><section className="cart-page section"><p className="eyebrow">Bag / {items.length} items</p><h1>YOUR<br/>SELECTION.</h1>{items.length ? <div className="checkout-layout"><div>{items.map(item => <article className="bag-line" key={`${item.slug}-${item.size}`}><img src={item.image} alt=""/><div><strong>{item.name}</strong><small>Colour: {item.colors[0]} · Size: {item.size}</small><button className="text-button" onClick={() => removeItem(item.slug, item.size)}>Remove</button></div><strong>{formatPrice(item.price * item.quantity)}</strong></article>)}</div><aside className="order-summary"><p>Subtotal <strong>{formatPrice(total)}</strong></p><p>Delivery <span>Calculated later</span></p><hr/><p className="total">Total <strong>{formatPrice(total)}</strong></p><button className="button solid" onClick={checkout} disabled={isCheckingOut}>{isCheckingOut ? "Redirecting to Yoco…" : "Pay securely with Yoco"}</button>{error ? <p className="checkout-error" role="alert">{error}</p> : <small>Secure checkout powered by Yoco.</small>}</aside></div> : <div className="empty-page"><p>No pieces selected yet.</p><Link className="button solid" href="/#new">Shop the collection</Link></div>}</section></main>;
+  return <main><SiteHeader/><section className="cart-page section"><p className="eyebrow">Bag / {items.length} items</p><h1>YOUR<br/>SELECTION.</h1>{items.length ? <div className="checkout-layout"><div>{items.map(item => <article className="bag-line" key={`${item.slug}-${item.size}`}><img src={item.image} alt=""/><div><strong>{item.name}</strong><small>Colour: {item.colors[0]} · Size: {item.size}</small><button className="text-button" onClick={() => removeItem(item.slug, item.size)}>Remove</button></div><strong>{formatPrice(item.price * item.quantity)}</strong></article>)}</div><aside className="order-summary"><p>Subtotal <strong>{formatPrice(total)}</strong></p><p>Delivery <span>Calculated later</span></p><hr/><p className="total">Total <strong>{formatPrice(total)}</strong></p><button className="button solid" onClick={checkout} disabled={isCheckingOut}>{isCheckingOut ? "Redirecting to Yoco…" : "Pay securely with Yoco"}</button>{error ? <p className="checkout-error" role="alert">{error}</p> : <small>{currency === "ZAR" ? "Secure checkout powered by Yoco." : "Displayed conversion is estimated. Checkout is charged in ZAR."}</small>}</aside></div> : <div className="empty-page"><p>No pieces selected yet.</p><Link className="button solid" href="/#new">Shop the collection</Link></div>}</section></main>;
 }
