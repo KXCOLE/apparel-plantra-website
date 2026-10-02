@@ -35,8 +35,9 @@ export async function POST(request: Request) {
       body: JSON.stringify({ amount, currency: "ZAR", successUrl: `${siteUrl}/checkout/success?order=${orderReference}`, cancelUrl: `${siteUrl}/checkout/cancel?order=${orderReference}`, failureUrl: `${siteUrl}/checkout/cancel?order=${orderReference}`, metadata: { orderReference, items: validItems.map(item => `${item.product.slug}:${item.size}:${item.quantity}`).join(",") } }),
       cache: "no-store"
     });
-    const checkout = await response.json().catch(() => null) as { redirectUrl?: string } | null;
-    if (!response.ok || !checkout?.redirectUrl) return NextResponse.json({ error: "Checkout is temporarily unavailable. Please try again shortly." }, { status: 502 });
+    const responseBody = await response.text();
+    const checkout = (() => { try { return JSON.parse(responseBody || "null") as { redirectUrl?: string } | null; } catch { return null; } })();
+    if (!response.ok || !checkout?.redirectUrl) { console.error("Yoco checkout rejected", { status: response.status, response: responseBody }); return NextResponse.json({ error: "Checkout is temporarily unavailable. Please try again shortly." }, { status: 502 }); }
     return NextResponse.json({ redirectUrl: checkout.redirectUrl });
   } catch (error) {
     console.error("Yoco checkout error", error);
