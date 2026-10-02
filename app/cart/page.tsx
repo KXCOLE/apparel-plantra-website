@@ -18,7 +18,9 @@ export default function CartPage() {
     setError("");
     try {
       const response = await fetch("/api/checkout", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ items: items.map(item => ({ slug: item.slug, size: item.size, quantity: item.quantity })) }) });
-      const data = await response.json() as { action?: string; fields?: Record<string, string>; error?: string };
+      const responseBody = await response.text();
+      let data: { action?: string; fields?: Record<string, string>; error?: string };
+      try { data = JSON.parse(responseBody) as { action?: string; fields?: Record<string, string>; error?: string }; } catch { throw new Error("Checkout could not start. Confirm the PayFast settings in Vercel, then redeploy."); }
       if (!response.ok || !data.action || !data.fields) throw new Error(data.error ?? "Unable to start checkout.");
       const form = document.createElement("form");
       form.method = "POST";

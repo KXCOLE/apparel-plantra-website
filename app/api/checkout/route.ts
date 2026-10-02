@@ -9,6 +9,7 @@ const encodeValue = (value: string) => encodeURIComponent(value.trim()).replace(
 const createSignature = (data: Record<string, string>, passphrase: string) => createHash("md5").update(`${Object.entries(data).filter(([, value]) => value).map(([key, value]) => `${key}=${encodeValue(value)}`).join("&")}&passphrase=${encodeValue(passphrase)}`).digest("hex");
 
 export async function POST(request: Request) {
+  try {
   const merchantId = process.env.PAYFAST_MERCHANT_ID;
   const merchantKey = process.env.PAYFAST_MERCHANT_KEY;
   const passphrase = process.env.PAYFAST_PASSPHRASE;
@@ -43,4 +44,7 @@ export async function POST(request: Request) {
   fields.signature = createSignature(fields, passphrase);
   const action = process.env.PAYFAST_SANDBOX === "true" ? "https://sandbox.payfast.co.za/eng/process" : "https://www.payfast.co.za/eng/process";
   return NextResponse.json({ action, fields });
+  } catch {
+    return NextResponse.json({ error: "Checkout could not start. Confirm the PayFast settings and redeploy." }, { status: 500 });
+  }
 }
