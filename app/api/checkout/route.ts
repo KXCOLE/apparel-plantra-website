@@ -4,7 +4,15 @@ import { products } from "@/data/products";
 import { siteUrl } from "@/data/site";
 
 type CheckoutItem = { slug?: unknown; size?: unknown; quantity?: unknown };
+type DeliveryDetails = { name?: unknown; phone?: unknown; address?: unknown; suburb?: unknown; city?: unknown; postalCode?: unknown };
+const deliveryFee = 11000;
+const freeDeliveryThreshold = 200000;
 export const runtime = "nodejs";
+
+const deliveryValue = (delivery: DeliveryDetails | undefined, field: keyof DeliveryDetails, maxLength: number) => {
+  const value = delivery?.[field];
+  return typeof value === "string" && value.trim().length > 1 && value.trim().length <= maxLength ? value.trim() : null;
+};
 
 export async function POST(request: Request) {
   try {
@@ -15,8 +23,15 @@ export async function POST(request: Request) {
     const secretKey = process.env.YOCO_SECRET_KEY;
     if (!secretKey) return NextResponse.json({ error: "Checkout is temporarily unavailable. Please try again shortly." }, { status: 503 });
 
-    const body = await request.json().catch(() => null) as { items?: CheckoutItem[] } | null;
+    const body = await request.json().catch(() => null) as { items?: CheckoutItem[]; delivery?: DeliveryDetails } | null;
     if (!body?.items?.length || !Array.isArray(body.items)) return NextResponse.json({ error: "Your bag is empty." }, { status: 400 });
+    const recipient = deliveryValue(body.delivery, "name", 100);
+    const phone = deliveryValue(body.delivery, "phone", 30);
+    const address = deliveryValue(body.delivery, "address", 160);
+    const suburb = deliveryValue(body.delivery, "suburb", 80);
+    const city = deliveryValue(body.delivery, "city", 80);
+    const postalCode = deliveryValue(body.delivery, "postalCode", 12);
+    if (!recipient || !phone || !address || !suburb || !city || !postalCode) return NextResponse.json({ error: "Please complete your delivery details before checkout." }, { status: 400 });
     const items = body.items.map(item => {
       const product = typeof item.slug === "string" ? products.find(entry => entry.slug === item.slug) : undefined;
       const quantity = typeof item.quantity === "number" && Number.isInteger(item.quantity) ? item.quantity : 0;
@@ -28,11 +43,12 @@ export async function POST(request: Request) {
 
     const validItems = items as { product: (typeof products)[number]; quantity: number; size: string }[];
     const orderReference = randomUUID();
-    const amount = validItems.reduce((total, item) => total + item.product.price * item.quantity * 100, 0);
+    const subtotal = validItems.reduce((total, item) => total + item.product.price * item.quantity * 100, 0);
+    const shipping = subtotal >= freeDeliveryThreshold ? 0 : deliveryFee;
     const response = await fetch("https://payments.yoco.com/api/checkouts", {
       method: "POST",
       headers: { Authorization: `Bearer ${secretKey}`, "Content-Type": "application/json", "Idempotency-Key": orderReference },
-      body: JSON.stringify({ amount, currency: "ZAR", successUrl: `${siteUrl}/checkout/success?order=${orderReference}`, cancelUrl: `${siteUrl}/checkout/cancel?order=${orderReference}`, failureUrl: `${siteUrl}/checkout/cancel?order=${orderReference}`, metadata: { orderReference, items: validItems.map(item => `${item.product.slug}:${item.size}:${item.quantity}`).join(",") } }),
+      body: JSON.stringify({ amount: subtotal + shipping, currency: "ZAR", successUrl: `${siteUrl}/checkout/success?order=${orderReference}`, cancelUrl: `${siteUrl}/checkout/cancel?order=${orderReference}`, failureUrl: `${siteUrl}/checkout/cancel?order=${orderReference}`, metadata: { orderReference, items: validItems.map(item => `${item.product.slug}:${item.size}:${item.quantity}`).join(","), delivery: `${recipient}; ${phone}; ${address}; ${suburb}; ${city}; ${postalCode}`, deliveryFee: String(shipping / 100) } }),
       cache: "no-store"
     });
     const responseBody = await response.text();
