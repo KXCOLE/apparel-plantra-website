@@ -4,12 +4,15 @@ import { products } from "@/data/products";
 import { siteUrl } from "@/data/site";
 
 type CheckoutItem = { slug?: unknown; size?: unknown; quantity?: unknown };
+export const runtime = "nodejs";
 
 const encodeValue = (value: string) => encodeURIComponent(value.trim()).replace(/%20/g, "+");
 const createSignature = (data: Record<string, string>, passphrase: string) => createHash("md5").update(`${Object.entries(data).filter(([, value]) => value).map(([key, value]) => `${key}=${encodeValue(value)}`).join("&")}&passphrase=${encodeValue(passphrase)}`).digest("hex");
 
 export async function POST(request: Request) {
   try {
+  const origin = request.headers.get("origin");
+  if (origin && new URL(origin).origin !== siteUrl) return NextResponse.json({ error: "Invalid checkout request." }, { status: 403 });
   const merchantId = process.env.PAYFAST_MERCHANT_ID;
   const merchantKey = process.env.PAYFAST_MERCHANT_KEY;
   const passphrase = process.env.PAYFAST_PASSPHRASE;
