@@ -13,6 +13,8 @@ export async function POST(request: Request) {
   try {
   const origin = request.headers.get("origin");
   if (origin && new URL(origin).origin !== siteUrl) return NextResponse.json({ error: "Invalid checkout request." }, { status: 403 });
+  const contentLength = Number(request.headers.get("content-length") ?? 0);
+  if (!Number.isFinite(contentLength) || contentLength > 10_000) return NextResponse.json({ error: "Invalid checkout request." }, { status: 413 });
   const merchantId = process.env.PAYFAST_MERCHANT_ID;
   const merchantKey = process.env.PAYFAST_MERCHANT_KEY;
   const passphrase = process.env.PAYFAST_PASSPHRASE;
