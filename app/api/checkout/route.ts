@@ -1,12 +1,18 @@
+import { createHash, randomUUID } from "crypto";
 import { NextResponse } from "next/server";
 import { products } from "@/data/products";
 import { siteUrl } from "@/data/site";
 
 type CheckoutItem = { slug?: unknown; size?: unknown; quantity?: unknown };
 
+const encodeValue = (value: string) => encodeURIComponent(value.trim()).replace(/%20/g, "+");
+const createSignature = (data: Record<string, string>, passphrase: string) => createHash("md5").update(`${Object.entries(data).filter(([, value]) => value).map(([key, value]) => `${key}=${encodeValue(value)}`).join("&")}&passphrase=${encodeValue(passphrase)}`).digest("hex");
+
 export async function POST(request: Request) {
-  const secretKey = process.env.YOCO_SECRET_KEY;
-  if (!secretKey) return NextResponse.json({ error: "Payments are not configured yet." }, { status: 503 });
+  const merchantId = process.env.PAYFAST_MERCHANT_ID;
+  const merchantKey = process.env.PAYFAST_MERCHANT_KEY;
+  const passphrase = process.env.PAYFAST_PASSPHRASE;
+  if (!merchantId || !merchantKey || !passphrase) return NextResponse.json({ error: "PayFast is not configured yet." }, { status: 503 });
 
   const body = await request.json().catch(() => null) as { items?: CheckoutItem[] } | null;
   if (!body?.items?.length || !Array.isArray(body.items)) return NextResponse.json({ error: "Your bag is empty." }, { status: 400 });
@@ -18,26 +24,23 @@ export async function POST(request: Request) {
     if (!product || !product.sizes.includes(size) || quantity < 1 || quantity > 10) return null;
     return { product, quantity, size };
   });
-
   if (items.some(item => !item)) return NextResponse.json({ error: "One or more bag items are unavailable." }, { status: 400 });
 
   const validItems = items as { product: (typeof products)[number]; quantity: number; size: string }[];
-  const amount = validItems.reduce((total, item) => total + item.product.price * item.quantity * 100, 0);
-  const orderReference = crypto.randomUUID();
-  const response = await fetch("https://payments.yoco.com/api/checkouts", {
-    method: "POST",
-    headers: { Authorization: `Bearer ${secretKey}`, "Content-Type": "application/json", "Idempotency-Key": orderReference },
-    body: JSON.stringify({
-      amount,
-      currency: "ZAR",
-      successUrl: `${siteUrl}/checkout/success?order=${orderReference}`,
-      cancelUrl: `${siteUrl}/checkout/cancel?order=${orderReference}`,
-      failureUrl: `${siteUrl}/checkout/cancel?order=${orderReference}`,
-      metadata: { orderReference, items: validItems.map(item => `${item.product.slug}:${item.size}:${item.quantity}`).join(",") }
-    })
-  });
-  const checkout = await response.json().catch(() => null) as { redirectUrl?: string } | null;
-  if (!response.ok || !checkout?.redirectUrl) return NextResponse.json({ error: "Unable to start checkout. Please try again." }, { status: 502 });
-
-  return NextResponse.json({ redirectUrl: checkout.redirectUrl });
+  const orderReference = randomUUID();
+  const amount = validItems.reduce((total, item) => total + item.product.price * item.quantity, 0).toFixed(2);
+  const fields: Record<string, string> = {
+    merchant_id: merchantId,
+    merchant_key: merchantKey,
+    return_url: `${siteUrl}/checkout/success?order=${orderReference}`,
+    cancel_url: `${siteUrl}/checkout/cancel?order=${orderReference}`,
+    notify_url: `${siteUrl}/api/payfast/itn`,
+    m_payment_id: orderReference,
+    amount,
+    item_name: `Apparel Plantra order ${orderReference.slice(0, 8)}`,
+    item_description: validItems.map(item => `${item.product.name} (${item.size}) × ${item.quantity}`).join(", ")
+  };
+  fields.signature = createSignature(fields, passphrase);
+  const action = process.env.PAYFAST_SANDBOX === "true" ? "https://sandbox.payfast.co.za/eng/process" : "https://www.payfast.co.za/eng/process";
+  return NextResponse.json({ action, fields });
 }
