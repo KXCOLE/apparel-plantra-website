@@ -3,7 +3,7 @@ export type Collection = { slug: string; name: string; description: string; stat
 export const collections: Collection[] = [
   { slug: "aptra-graphics", name: "APTRA GRAPHICS", description: "Graphic T-shirts from Apparel Plantra.", status: "Available now" },
   { slug: "shorts", name: "SHORTS", description: "Shorts collection.", status: "New drop" },
-  { slug: "classic-tees", name: "CLASSIC TEES", description: "Essential T-shirts collection.", status: "Coming soon" },
+  { slug: "classic-tees", name: "CLASSIC TEES", description: "Essential T-shirts collection.", status: "Available now" },
   { slug: "utility-bottoms", name: "UTILITY BOTTOMS", description: "Cargos, sweatpants and elevated everyday bottoms.", status: "Coming soon" },
   { slug: "beanies-caps", name: "THE HEADWEAR EDIT", description: "Headwear built to finish the look.", status: "Coming soon" },
   { slug: "accessories", name: "ACCESSORIES", description: "Essential finishing pieces from Apparel Plantra.", status: "Coming soon" },
