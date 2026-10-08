@@ -1,6 +1,6 @@
 import { randomUUID } from "crypto";
 import { NextResponse } from "next/server";
-import { products } from "@/data/products";
+import { isReleased, products } from "@/data/products";
 import { siteUrl } from "@/data/site";
 
 type CheckoutItem = { slug?: unknown; size?: unknown; quantity?: unknown };
@@ -39,7 +39,7 @@ export async function POST(request: Request) {
       const product = typeof item.slug === "string" ? products.find(entry => entry.slug === item.slug) : undefined;
       const quantity = typeof item.quantity === "number" && Number.isInteger(item.quantity) ? item.quantity : 0;
       const size = typeof item.size === "string" ? item.size : "";
-      if (!product || product.soldOut || !product.sizes.includes(size) || quantity < 1 || quantity > 10) return null;
+      if (!product || product.soldOut || !isReleased(product) || !product.sizes.includes(size) || quantity < 1 || quantity > 10) return null;
       return { product, quantity, size };
     });
     if (items.some(item => !item)) return NextResponse.json({ error: "One or more bag items are unavailable." }, { status: 400 });
